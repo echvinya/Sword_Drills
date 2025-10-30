@@ -219,7 +219,7 @@
         }
 
         .display-area {
-            min-height: 300px;
+            min-height: 100%;
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -233,8 +233,8 @@
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 20px;
-            width: 100%;
-            max-width: 600px;
+            width: 90%;
+            max-width: none;
         }
 
         .panel-wrapper {
@@ -257,7 +257,8 @@
             background: rgba(255, 255, 255, 0.1);
             border-radius: 15px;
             padding: 25px;
-            min-height: 100px;
+            min-height: 0;
+            flex: 1;  /* Make panels grow equally */
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -268,13 +269,13 @@
 
         .verse-reference {
             font-family: 'Bangers', cursive;
-            font-size: 2em;
+            font-size: 5em;
             color: #ffd700;
             text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
         }
 
         .style-display {
-            font-size: 1.1em;
+            font-size: 1.8em;
             font-weight: bold;
             color: #ff6b6b;
             text-align: center;
