@@ -450,13 +450,13 @@
     </div>
 
     <script>
-        // Configuration - Update these with your Google Sheets details
-        const SHEET_ID = 'YOUR_SHEET_ID_HERE'; // Replace with your Google Sheet ID
-        const API_KEY = 'YOUR_API_KEY_HERE'; // Replace with your Google Sheets API key
-        
-        // Sheet ranges
-        const VERSES_RANGE = 'Verses!A2:E'; // Adjust based on your sheet structure
-        const STYLES_RANGE = 'Styles!A2:C'; // Now includes Style, Participant, and Winning Condition
+        // Configuration - Update these with your Google Sheets published URLs
+        // To get these URLs:
+        // 1. Go to File > Share > Publish to web
+        // 2. Select the specific sheet tab and CSV format
+        // 3. Copy the URL for each tab
+        const VERSES_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT7D4j6U_k6FuGenj2sWRPX2Bw3rkon4dgzLolNTeQ7aNbkWXW5U3hLsjTuEZOHl_aBGIxG3s59mz8W/pub?gid=0&single=true&output=csv'; // Replace with your Verses tab CSV URL
+        const STYLES_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT7D4j6U_k6FuGenj2sWRPX2Bw3rkon4dgzLolNTeQ7aNbkWXW5U3hLsjTuEZOHl_aBGIxG3s59mz8W/pub?gid=1443483884&single=true&output=csv'; // Replace with your Styles tab CSV URL
         
         let verses = [];
         let styles = [];
@@ -473,9 +473,8 @@
             displayArea.innerHTML = '<p class="loading">Loading hero training data...</p>';
             
             try {
-                // For demo purposes, using sample data
-                // Replace this with actual Google Sheets API calls
-                await loadSampleData();
+                // Load data from Google Sheets CSV
+                await loadFromSheets();
                 
                 displayArea.innerHTML = '<p class="loading">Ready to train, hero!</p>';
             } catch (error) {
@@ -510,33 +509,76 @@
             ];
         }
         
-        // Load data from Google Sheets (implement this with actual API)
+        // Parse CSV data
+        function parseCSV(csv) {
+            const lines = csv.trim().split('\n');
+            const headers = lines[0].split(',').map(h => h.trim());
+            const data = [];
+            
+            for (let i = 1; i < lines.length; i++) {
+                const values = [];
+                let current = '';
+                let inQuotes = false;
+                
+                for (let char of lines[i]) {
+                    if (char === '"') {
+                        inQuotes = !inQuotes;
+                    } else if (char === ',' && !inQuotes) {
+                        values.push(current.trim());
+                        current = '';
+                    } else {
+                        current += char;
+                    }
+                }
+                values.push(current.trim());
+                
+                if (values.length === headers.length) {
+                    const row = {};
+                    headers.forEach((header, index) => {
+                        row[header] = values[index];
+                    });
+                    data.push(row);
+                }
+            }
+            
+            return data;
+        }
+        
+        // Load data from Google Sheets CSV
         async function loadFromSheets() {
-            const versesUrl = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${VERSES_RANGE}?key=${API_KEY}`;
-            const stylesUrl = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${STYLES_RANGE}?key=${API_KEY}`;
-            
-            // Fetch verses
-            const versesResponse = await fetch(versesUrl);
-            const versesData = await versesResponse.json();
-            
-            // Fetch styles
-            const stylesResponse = await fetch(stylesUrl);
-            const stylesData = await stylesResponse.json();
-            
-            // Process data
-            verses = versesData.values.map(row => ({
-                number: row[0],
-                reference: row[1],
-                verse: row[2],
-                version: row[3],
-                category: row[4]
-            }));
-            
-            styles = stylesData.values.map(row => ({
-                style: row[0],
-                participant: row[1],
-                winCondition: row[2]
-            }));
+            try {
+                // Fetch verses
+                const versesResponse = await fetch(VERSES_CSV_URL);
+                const versesCSV = await versesResponse.text();
+                const versesData = parseCSV(versesCSV);
+                
+                // Fetch styles
+                const stylesResponse = await fetch(STYLES_CSV_URL);
+                const stylesCSV = await stylesResponse.text();
+                const stylesData = parseCSV(stylesCSV);
+                
+                // Process verses data
+                verses = versesData.map(row => ({
+                    number: row['Number'] || row['number'],
+                    reference: row['Reference'] || row['reference'],
+                    verse: row['Verse'] || row['verse'],
+                    version: row['Version'] || row['version'],
+                    category: row['Category'] || row['category']
+                }));
+                
+                // Process styles data
+                styles = stylesData.map(row => ({
+                    style: row['Style'] || row['style'],
+                    participant: row['Participant'] || row['participant'],
+                    winCondition: row['Winning Condition'] || row['winning condition'] || row['WinningCondition']
+                }));
+                
+                console.log(`Loaded ${verses.length} verses and ${styles.length} styles`);
+            } catch (error) {
+                console.error('Error loading from Google Sheets:', error);
+                // Fall back to sample data
+                await loadSampleData();
+            }
         }
         
         // Get random item from array
