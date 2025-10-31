@@ -265,6 +265,11 @@
             align-items: center;
             position: relative;
             overflow: hidden;
+            transition: filter 0.3s ease-in-out;
+        }
+
+        .suspense .panel {
+            filter: blur(5px) opacity(0.6);
         }
 
         .verse-reference {
@@ -645,23 +650,7 @@
             setTimeout(() => lightning.remove(), 500);
         }
         
-        // New challenge
-        function newChallenge(e) {
-            if (verses.length === 0) {
-                displayArea.innerHTML = '<p class="error">No verses loaded!</p>';
-                return;
-            }
-            
-            // Create ripple effect
-            createRipple(e);
-            
-            // Get random verse
-            currentVerse = getRandomItem(verses);
-            
-            // Get random style if enabled
-            currentStyle = styleToggle.checked && styles.length > 0 ? getRandomItem(styles) : null;
-            
-            // Create panels
+        function generatePanelsHTML(verse, style) {
             let html = '<div class="panels-container">';
             
             // Verse panel
@@ -669,23 +658,23 @@
                 <div class="panel-wrapper">
                     <div class="panel-title">VERSE REFERENCE</div>
                     <div class="panel panel-left">
-                        <div class="verse-reference">${currentVerse.reference}</div>
+                        <div class="verse-reference">${verse.reference}</div>
                     </div>
                 </div>
             `;
             
             // Style panel
-            if (currentStyle) {
-                const participantIcon = currentStyle.participant === 'Team' ? '👥' : '🦸';
-                const participantText = currentStyle.participant === 'Team' ? 'Team' : 'Individual';
+            if (style) {
+                const participantIcon = style.participant === 'Team' ? '👥' : '🦸';
+                const participantText = style.participant === 'Team' ? 'Team' : 'Individual';
                 
                 html += `
                     <div class="panel-wrapper">
                         <div class="panel-title">CHALLENGE STYLE</div>
                         <div class="panel panel-right">
                             <div class="style-display">
-                                <div class="style-name">${currentStyle.style}</div>
-                                <div class="style-condition">${currentStyle.winCondition}</div>
+                                <div class="style-name">${style.style}</div>
+                                <div class="style-condition">${style.winCondition}</div>
                                 <div class="participant-icon">
                                     <span>${participantIcon}</span>
                                     ${participantText}
@@ -712,20 +701,54 @@
             }
             
             html += '</div>';
+            return html;
+        }
+
+        // New challenge
+        function newChallenge(e) {
+            if (verses.length === 0) {
+                displayArea.innerHTML = '<p class="error">No verses loaded!</p>';
+                return;
+            }
             
-            displayArea.innerHTML = html;
+            // Create ripple effect
+            createRipple(e);
             
-            // Create explosion effect on panels
-            setTimeout(() => {
-                const panels = document.querySelectorAll('.panel');
-                panels.forEach(panel => createExplosion(panel));
+            // Disable button during animation
+            newChallengeBtn.disabled = true;
+            revealVerseBtn.style.display = 'none';
+            displayArea.classList.add('suspense');
+
+            let suspenseInterval = setInterval(() => {
+                // Get random verse and style for the "spinning" effect
+                const randomVerse = getRandomItem(verses);
+                const randomStyle = styleToggle.checked && styles.length > 0 ? getRandomItem(styles) : null;
+                displayArea.innerHTML = generatePanelsHTML(randomVerse, randomStyle);
             }, 100);
-            
-            // Show reveal button
-            revealVerseBtn.style.display = 'inline-block';
-            
-            // Add lightning effect
-            createLightning();
+
+            // Stop the suspense after a few seconds
+            setTimeout(() => {
+                clearInterval(suspenseInterval);
+                displayArea.classList.remove('suspense');
+
+                // Get the final random verse and style
+                currentVerse = getRandomItem(verses);
+                currentStyle = styleToggle.checked && styles.length > 0 ? getRandomItem(styles) : null;
+                displayArea.innerHTML = generatePanelsHTML(currentVerse, currentStyle);
+
+                // Create explosion effect on panels
+                setTimeout(() => {
+                    const panels = document.querySelectorAll('.panel');
+                    panels.forEach(panel => createExplosion(panel));
+                }, 100);
+
+                // Show reveal button and re-enable new challenge button
+                revealVerseBtn.style.display = 'inline-block';
+                newChallengeBtn.disabled = false;
+
+                // Add lightning effect
+                createLightning();
+            }, 2000); // Animation duration: 2 seconds
         }
         
         // Reveal verse
