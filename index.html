@@ -275,9 +275,6 @@
         }
 
         .style-display {
-            font-size: 1.4em;
-            font-weight: bold;
-            color: #ff6b6b;
             text-align: center;
             display: flex;
             flex-direction: column;
@@ -285,19 +282,33 @@
             align-items: center;
         }
 
+        .style-header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        .style-name {
+            font-family: 'Bangers', cursive;
+            font-size: 3.8em;
+            color: #ff6b6b;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .style-condition {
+            font-size: 1.2em;
+            opacity: 0.8;
+        }
+
         .participant-icon {
             display: flex;
             align-items: center;
             gap: 5px;
-            font-size: 0.9em;
-            background: rgba(255, 255, 255, 0.15);
-            padding: 5px 15px;
-            border-radius: 20px;
-            margin-top: 10px;
+            font-size: 2.7em;
         }
 
         .participant-icon span {
-            font-size: 1.2em;
         }
 
         .verse-text {
@@ -420,6 +431,70 @@
                 padding: 15px;
             }
         }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .modal-content {
+            background: #2c3e50;
+            color: white;
+            padding: 30px 40px;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 700px;
+            position: relative;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            animation: zoomIn 0.3s ease-out;
+        }
+
+        @keyframes zoomIn {
+            from { transform: scale(0.8); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .close-button {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            color: #ccc;
+            font-size: 35px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+
+        .close-button:hover {
+            color: #ff6b6b;
+        }
+
+        .modal-content h2 {
+            font-family: 'Bangers', cursive;
+            color: #ffd700;
+            font-size: 3em;
+            margin-bottom: 20px;
+            text-align: center;
+            letter-spacing: 3px;
+        }
+
+        #modalVerseText {
+            font-size: 1.6em;
+            line-height: 1.6;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
@@ -438,6 +513,7 @@
         <div class="controls-section">
             <div class="buttons">
                 <button class="button primary-button" id="newChallenge">NEW CHALLENGE</button>
+                <button class="button" id="previewVerse" style="display: none;">PREVIEW VERSE</button>
                 <button class="button" id="revealVerse" style="display: none;">REVEAL VERSE</button>
             </div>
             <div class="toggle-container">
@@ -446,6 +522,14 @@
                     <input type="checkbox" id="styleToggle" checked>
                     <span class="slider"></span>
                 </label>
+            </div>
+        </div>
+        <!-- Verse Preview Modal -->
+        <div id="verseModal" class="modal">
+            <div class="modal-content">
+                <span class="close-button">&times;</span>
+                <h2>Verse Preview</h2>
+                <p id="modalVerseText"></p>
             </div>
         </div>
     </div>
@@ -467,7 +551,11 @@
         const displayArea = document.getElementById('displayArea');
         const newChallengeBtn = document.getElementById('newChallenge');
         const revealVerseBtn = document.getElementById('revealVerse');
+        const previewVerseBtn = document.getElementById('previewVerse');
         const styleToggle = document.getElementById('styleToggle');
+        const modal = document.getElementById('verseModal');
+        const modalVerseText = document.getElementById('modalVerseText');
+        const closeButton = document.querySelector('.close-button');
         
         // Initialize
         async function init() {
@@ -477,7 +565,19 @@
                 // Load data from Google Sheets CSV
                 await loadFromSheets();
                 
-                displayArea.innerHTML = '<p class="loading">Ready to train, hero!</p>';
+                // If loading from sheets (including its own fallback) results in no verses,
+                // explicitly load the sample data as a final fallback.
+                if (verses.length === 0 || styles.length === 0) {
+                    console.log("Data sets are empty after initial load. Forcing sample data.");
+                    await loadSampleData();
+                }
+
+                // Final check to see if we have any data to work with
+                if (verses.length > 0) {
+                    displayArea.innerHTML = '<p class="loading">Ready to train, hero?</p>';
+                } else {
+                    displayArea.innerHTML = '<p class="error">Fatal Error: Could not load any verse data.</p>';
+                }
             } catch (error) {
                 displayArea.innerHTML = '<p class="error">Error loading data. Check your connection!</p>';
                 console.error('Error:', error);
@@ -645,23 +745,7 @@
             setTimeout(() => lightning.remove(), 500);
         }
         
-        // New challenge
-        function newChallenge(e) {
-            if (verses.length === 0) {
-                displayArea.innerHTML = '<p class="error">No verses loaded!</p>';
-                return;
-            }
-
-            // Create ripple effect
-            createRipple(e);
-
-            // Get random verse
-            currentVerse = getRandomItem(verses);
-
-            // Get random style if enabled
-            currentStyle = styleToggle.checked && styles.length > 0 ? getRandomItem(styles) : null;
-
-            // Create panels
+        function generatePanelsHTML(verse, style) {
             let html = '<div class="panels-container">';
             
             // Verse panel
@@ -669,27 +753,27 @@
                 <div class="panel-wrapper">
                     <div class="panel-title">VERSE REFERENCE</div>
                     <div class="panel panel-left">
-                        <div class="verse-reference">${currentVerse.reference}</div>
+                        <div class="verse-reference">${verse.reference}</div>
                     </div>
                 </div>
             `;
             
             // Style panel
-            if (currentStyle) {
-                const participantIcon = currentStyle.participant === 'Team' ? '👥' : '🦸';
-                const participantText = currentStyle.participant === 'Team' ? 'Team' : 'Individual';
+            if (style) {
+                const participantIcon = style.participant === 'Team' ? '👥' : '🦸';
                 
                 html += `
                     <div class="panel-wrapper">
                         <div class="panel-title">CHALLENGE STYLE</div>
                         <div class="panel panel-right">
                             <div class="style-display">
-                                <div class="style-name">${currentStyle.style}</div>
-                                <div class="style-condition">${currentStyle.winCondition}</div>
-                                <div class="participant-icon">
-                                    <span>${participantIcon}</span>
-                                    ${participantText}
+                                <div class="style-header">
+                                    <div class="style-name">${style.style}</div>
+                                    <div class="participant-icon">
+                                        <span>${participantIcon}</span>
+                                    </div>
                                 </div>
+                                <div class="style-condition">${style.winCondition}</div>
                             </div>
                         </div>
                     </div>
@@ -700,10 +784,11 @@
                         <div class="panel-title">CHALLENGE STYLE</div>
                         <div class="panel panel-right">
                             <div class="style-display">
-                                <div>Standard Reading</div>
-                                <div class="participant-icon">
-                                    <span>🦸</span>
-                                    Individual
+                                <div class="style-header">
+                                    <div class="style-name">Standard Reading</div>
+                                    <div class="participant-icon">
+                                        <span>🦸</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -712,8 +797,47 @@
             }
             
             html += '</div>';
+            return html;
+        }
+
+        // Run the suspense animation
+        function runSuspenseAnimation() {
+            return new Promise(resolve => {
+                displayArea.classList.add('suspense');
+                let suspenseInterval = setInterval(() => {
+                    const randomVerse = getRandomItem(verses);
+                    const randomStyle = styleToggle.checked && styles.length > 0 ? getRandomItem(styles) : null;
+                    displayArea.innerHTML = generatePanelsHTML(randomVerse, randomStyle);
+                }, 100);
+
+                setTimeout(() => {
+                    clearInterval(suspenseInterval);
+                    displayArea.classList.remove('suspense');
+                    resolve();
+                }, 2000);
+            });
+        }
+
+        // New challenge
+        async function newChallenge(e) {
+            if (verses.length === 0) {
+                displayArea.innerHTML = '<p class="error">No verses loaded!</p>';
+                return;
+            }
             
-            displayArea.innerHTML = html;
+            if (e) {
+                createRipple(e);
+            }
+            newChallengeBtn.disabled = true;
+            revealVerseBtn.style.display = 'none';
+            previewVerseBtn.style.display = 'none';
+
+            await runSuspenseAnimation();
+
+            // Get the final random verse and style
+            currentVerse = getRandomItem(verses);
+            currentStyle = styleToggle.checked && styles.length > 0 ? getRandomItem(styles) : null;
+            displayArea.innerHTML = generatePanelsHTML(currentVerse, currentStyle);
 
             // Create explosion effect on panels
             setTimeout(() => {
@@ -721,10 +845,11 @@
                 panels.forEach(panel => createExplosion(panel));
             }, 100);
 
-            // Show reveal button
+            // Show reveal button and re-enable new challenge button
             revealVerseBtn.style.display = 'inline-block';
+            previewVerseBtn.style.display = 'inline-block';
+            newChallengeBtn.disabled = false;
 
-            // Add lightning effect
             createLightning();
         }
         
@@ -748,10 +873,31 @@
             // Hide reveal button
             revealVerseBtn.style.display = 'none';
         }
+
+        // Preview verse in modal
+        function previewVerse() {
+            if (!currentVerse) return;
+            modalVerseText.innerHTML = `"${currentVerse.verse}" <br><br><em>(${currentVerse.reference} ${currentVerse.version})</em>`;
+            modal.style.display = 'flex';
+        }
+
+        // Close modal
+        function closeModal() {
+            modal.style.display = 'none';
+        }
         
         // Event listeners
         newChallengeBtn.addEventListener('click', newChallenge);
         revealVerseBtn.addEventListener('click', revealVerse);
+        previewVerseBtn.addEventListener('click', previewVerse);
+        closeButton.addEventListener('click', closeModal);
+
+        // Close modal if clicked outside of the content
+        window.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                closeModal();
+            }
+        });
         
         // Initialize on load
         init();
