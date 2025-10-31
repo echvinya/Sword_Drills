@@ -202,6 +202,24 @@
             box-shadow: 0 8px 20px rgba(255, 215, 0, 0.6);
         }
 
+        .secondary-button {
+            padding: 12px 28px;
+            font-size: 1.1em;
+            background: rgba(255, 255, 255, 0.1);
+            box-shadow: none;
+        }
+
+        .secondary-button:hover {
+            background: rgba(255, 255, 255, 0.2);
+            box-shadow: none;
+        }
+
+        .side-controls-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
         /* Ripple effect for button */
         .ripple {
             position: absolute;
@@ -449,15 +467,17 @@
         <div class="controls-section">
             <div class="buttons">
                 <button class="button primary-button" id="newChallenge">NEW CHALLENGE</button>
-                <button class="button" id="previewVerse" style="display: none;">PREVIEW VERSE</button>
                 <button class="button" id="revealVerse" style="display: none;">REVEAL VERSE</button>
             </div>
-            <div class="toggle-container">
-                <span>Randomize Style</span>
-                <label class="toggle">
-                    <input type="checkbox" id="styleToggle" checked>
-                    <span class="slider"></span>
-                </label>
+            <div class="side-controls-container">
+                <button class="button secondary-button" id="previewVerse">Preview</button>
+                <div class="toggle-container">
+                    <span>Randomize Style</span>
+                    <label class="toggle">
+                        <input type="checkbox" id="styleToggle" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
             </div>
         </div>
     </div>
@@ -475,6 +495,7 @@
         let styles = [];
         let currentVerse = null;
         let currentStyle = null;
+        let previewWindow = null;
         
         const displayArea = document.getElementById('displayArea');
         const newChallengeBtn = document.getElementById('newChallenge');
@@ -755,7 +776,6 @@
             }
             newChallengeBtn.disabled = true;
             revealVerseBtn.style.display = 'none';
-            previewVerseBtn.style.display = 'none';
 
             await runSuspenseAnimation();
 
@@ -772,10 +792,14 @@
 
             // Show reveal button and re-enable new challenge button
             revealVerseBtn.style.display = 'inline-block';
-            previewVerseBtn.style.display = 'inline-block';
             newChallengeBtn.disabled = false;
 
             createLightning();
+
+            // If the preview window is open, refresh its content
+            if (previewWindow && !previewWindow.closed) {
+                previewVerse(); // Re-run the preview function to update the content
+            }
         }
         
         // Reveal verse
@@ -801,56 +825,65 @@
 
         // Preview verse in a new window
         function previewVerse() {
-            if (!currentVerse) return;
-
-            const newWindow = window.open('', '_blank', 'width=800,height=600,scrollbars=yes,resizable=yes');
-
-            if (newWindow) {
-                newWindow.document.write(`
-                    <html>
-                        <head>
-                            <title>Verse Preview</title>
-                            <style>
-                                @import url('https://fonts.googleapis.com/css2?family=Bangers&family=Comic+Neue:wght@400;700&display=swap');
-                                body {
-                                    font-family: 'Comic Neue', cursive;
-                                    background-color: #1a2a47;
-                                    color: white;
-                                    display: flex;
-                                    align-items: center;
-                                    justify-content: center;
-                                    height: 100vh;
-                                    margin: 0;
-                                    padding: 40px;
-                                    box-sizing: border-box;
-                                    text-align: center;
-                                    font-size: 2.5em;
-                                    line-height: 1.6;
-                                }
-                                .verse-container {
-                                    max-width: 90%;
-                                }
-                                .reference {
-                                    font-family: 'Bangers', cursive;
-                                    color: #ffd700;
-                                    font-size: 1.8em;
-                                    display: block;
-                                    margin-bottom: 25px;
-                                }
-                            </style>
-                        </head>
-                        <body>
-                            <div class="verse-container">
-                                <span class="reference">${currentVerse.reference} (${currentVerse.version})</span>
-                                "${currentVerse.verse}"
-                            </div>
-                        </body>
-                    </html>
-                `);
-                newWindow.document.close(); // Important for some browsers
-            } else {
-                alert('Please allow pop-ups for this site to use the preview feature.');
+            if (!currentVerse) {
+                alert("Generate a new challenge first!");
+                return;
             }
+
+            // If the window is already open, bring it to focus. Otherwise, create it.
+            if (previewWindow && !previewWindow.closed) {
+                previewWindow.focus();
+            } else {
+                previewWindow = window.open('', '_blank', 'width=800,height=600,scrollbars=yes,resizable=yes');
+                if (!previewWindow) {
+                    alert('Please allow pop-ups for this site to use the preview feature.');
+                    return;
+                }
+            }
+
+            // Write the content to the window
+            previewWindow.document.write(`
+                <html>
+                    <head>
+                        <title>Verse Preview</title>
+                        <style>
+                            @import url('https://fonts.googleapis.com/css2?family=Bangers&family=Comic+Neue:wght@400;700&display=swap');
+                            body {
+                                font-family: 'Comic Neue', cursive;
+                                background-color: #1a2a47;
+                                color: white;
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                height: 100vh;
+                                margin: 0;
+                                padding: 40px;
+                                box-sizing: border-box;
+                                text-align: center;
+                                font-size: 2.5em;
+                                line-height: 1.6;
+                            }
+                            .verse-container {
+                                max-width: 90%;
+                            }
+                            .reference {
+                                font-family: 'Bangers', cursive;
+                                color: #ffd700;
+                                font-size: 1.8em;
+                                display: block;
+                                margin-bottom: 25px;
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="verse-container">
+                            <span class="reference">${currentVerse.reference} (${currentVerse.version})</span>
+                            "${currentVerse.verse}"
+                        </div>
+                    </body>
+                </html>
+            `);
+            previewWindow.document.close();
         }
 
         // Event listeners
