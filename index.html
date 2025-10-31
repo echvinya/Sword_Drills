@@ -265,11 +265,6 @@
             align-items: center;
             position: relative;
             overflow: hidden;
-            transition: filter 0.3s ease-in-out;
-        }
-
-        .suspense .panel {
-            filter: blur(5px) opacity(0.6);
         }
 
         .verse-reference {
@@ -280,6 +275,9 @@
         }
 
         .style-display {
+            font-size: 1.4em;
+            font-weight: bold;
+            color: #ff6b6b;
             text-align: center;
             display: flex;
             flex-direction: column;
@@ -287,37 +285,23 @@
             align-items: center;
         }
 
-        .style-header {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 20px;
-        }
-
-        .style-name {
-            font-family: 'Bangers', cursive;
-            font-size: 3.8em;
-            color: #ff6b6b;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-        }
-
-        .style-condition {
-            font-size: 1.2em;
-            opacity: 0.8;
-        }
-
         .participant-icon {
             display: flex;
             align-items: center;
             gap: 5px;
-            font-size: 2.7em;
+            font-size: 0.9em;
+            background: rgba(255, 255, 255, 0.15);
+            padding: 5px 15px;
+            border-radius: 20px;
+            margin-top: 10px;
         }
 
         .participant-icon span {
+            font-size: 1.2em;
         }
 
         .verse-text {
-            font-size: 2em;
+            font-size: 1.4em;
             line-height: 1.6;
             padding: 25px;
             background: rgba(0, 0, 0, 0.3);
@@ -425,70 +409,6 @@
             100% { opacity: 0; transform: scaleY(1); }
         }
 
-        /* Modal Styles */
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.7);
-            backdrop-filter: blur(5px);
-            align-items: center;
-            justify-content: center;
-            animation: fadeIn 0.3s ease-out;
-        }
-
-        .modal-content {
-            background: #2c3e50;
-            color: white;
-            padding: 30px 40px;
-            border-radius: 20px;
-            width: 90%;
-            max-width: 700px;
-            position: relative;
-            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6);
-            border: 2px solid rgba(255, 255, 255, 0.2);
-            animation: zoomIn 0.3s ease-out;
-        }
-
-        @keyframes zoomIn {
-            from { transform: scale(0.8); opacity: 0; }
-            to { transform: scale(1); opacity: 1; }
-        }
-
-        .close-button {
-            position: absolute;
-            top: 15px;
-            right: 20px;
-            color: #ccc;
-            font-size: 35px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: color 0.3s ease;
-        }
-
-        .close-button:hover {
-            color: #ff6b6b;
-        }
-
-        .modal-content h2 {
-            font-family: 'Bangers', cursive;
-            color: #ffd700;
-            font-size: 3em;
-            margin-bottom: 20px;
-            text-align: center;
-            letter-spacing: 3px;
-        }
-
-        #modalVerseText {
-            font-size: 1.6em;
-            line-height: 1.6;
-            text-align: center;
-        }
-
         @media (max-width: 600px) {
             h1 { font-size: 2.5em; }
             .container { padding: 20px; }
@@ -517,8 +437,7 @@
         
         <div class="controls-section">
             <div class="buttons">
-                <button class="button primary-button" id="newChallenge" data-testid="new-challenge-button">NEW CHALLENGE</button>
-                <button class="button" id="previewVerse" style="display: none;" data-testid="preview-verse-button">PREVIEW VERSE</button>
+                <button class="button primary-button" id="newChallenge">NEW CHALLENGE</button>
                 <button class="button" id="revealVerse" style="display: none;">REVEAL VERSE</button>
             </div>
             <div class="toggle-container">
@@ -548,11 +467,7 @@
         const displayArea = document.getElementById('displayArea');
         const newChallengeBtn = document.getElementById('newChallenge');
         const revealVerseBtn = document.getElementById('revealVerse');
-        const previewVerseBtn = document.getElementById('previewVerse');
         const styleToggle = document.getElementById('styleToggle');
-        const modal = document.getElementById('verseModal');
-        const modalVerseText = document.getElementById('modalVerseText');
-        const closeButton = document.querySelector('.close-button');
         
         // Initialize
         async function init() {
@@ -562,7 +477,7 @@
                 // Load data from Google Sheets CSV
                 await loadFromSheets();
                 
-                displayArea.innerHTML = '<p class="loading">Ready to train, hero?</p>';
+                displayArea.innerHTML = '<p class="loading">Ready to train, hero!</p>';
             } catch (error) {
                 displayArea.innerHTML = '<p class="error">Error loading data. Check your connection!</p>';
                 console.error('Error:', error);
@@ -633,16 +548,13 @@
         // Load data from Google Sheets CSV
         async function loadFromSheets() {
             try {
-                console.log("Fetching from Google Sheets...");
                 // Fetch verses
                 const versesResponse = await fetch(VERSES_CSV_URL);
-                if (!versesResponse.ok) throw new Error(`Failed to fetch verses: ${versesResponse.statusText}`);
                 const versesCSV = await versesResponse.text();
                 const versesData = parseCSV(versesCSV);
                 
                 // Fetch styles
                 const stylesResponse = await fetch(STYLES_CSV_URL);
-                if (!stylesResponse.ok) throw new Error(`Failed to fetch styles: ${stylesResponse.statusText}`);
                 const stylesCSV = await stylesResponse.text();
                 const stylesData = parseCSV(stylesCSV);
                 
@@ -664,9 +576,8 @@
                 
                 console.log(`Loaded ${verses.length} verses and ${styles.length} styles`);
             } catch (error) {
-                console.error('Error loading from Google Sheets:', error.message);
+                console.error('Error loading from Google Sheets:', error);
                 // Fall back to sample data
-                console.log("Falling back to sample data.");
                 await loadSampleData();
             }
         }
@@ -734,7 +645,23 @@
             setTimeout(() => lightning.remove(), 500);
         }
         
-        function generatePanelsHTML(verse, style) {
+        // New challenge
+        function newChallenge(e) {
+            if (verses.length === 0) {
+                displayArea.innerHTML = '<p class="error">No verses loaded!</p>';
+                return;
+            }
+
+            // Create ripple effect
+            createRipple(e);
+
+            // Get random verse
+            currentVerse = getRandomItem(verses);
+
+            // Get random style if enabled
+            currentStyle = styleToggle.checked && styles.length > 0 ? getRandomItem(styles) : null;
+
+            // Create panels
             let html = '<div class="panels-container">';
             
             // Verse panel
@@ -742,27 +669,27 @@
                 <div class="panel-wrapper">
                     <div class="panel-title">VERSE REFERENCE</div>
                     <div class="panel panel-left">
-                        <div class="verse-reference">${verse.reference}</div>
+                        <div class="verse-reference">${currentVerse.reference}</div>
                     </div>
                 </div>
             `;
             
             // Style panel
-            if (style) {
-                const participantIcon = style.participant === 'Team' ? '👥' : '🦸';
+            if (currentStyle) {
+                const participantIcon = currentStyle.participant === 'Team' ? '👥' : '🦸';
+                const participantText = currentStyle.participant === 'Team' ? 'Team' : 'Individual';
                 
                 html += `
                     <div class="panel-wrapper">
                         <div class="panel-title">CHALLENGE STYLE</div>
                         <div class="panel panel-right">
                             <div class="style-display">
-                                <div class="style-header">
-                                    <div class="style-name">${style.style}</div>
-                                    <div class="participant-icon">
-                                        <span>${participantIcon}</span>
-                                    </div>
+                                <div class="style-name">${currentStyle.style}</div>
+                                <div class="style-condition">${currentStyle.winCondition}</div>
+                                <div class="participant-icon">
+                                    <span>${participantIcon}</span>
+                                    ${participantText}
                                 </div>
-                                <div class="style-condition">${style.winCondition}</div>
                             </div>
                         </div>
                     </div>
@@ -773,11 +700,10 @@
                         <div class="panel-title">CHALLENGE STYLE</div>
                         <div class="panel panel-right">
                             <div class="style-display">
-                                <div class="style-header">
-                                    <div class="style-name">Standard Reading</div>
-                                    <div class="participant-icon">
-                                        <span>🦸</span>
-                                    </div>
+                                <div>Standard Reading</div>
+                                <div class="participant-icon">
+                                    <span>🦸</span>
+                                    Individual
                                 </div>
                             </div>
                         </div>
@@ -786,47 +712,8 @@
             }
             
             html += '</div>';
-            return html;
-        }
-
-        // Run the suspense animation
-        function runSuspenseAnimation() {
-            return new Promise(resolve => {
-                displayArea.classList.add('suspense');
-                let suspenseInterval = setInterval(() => {
-                    const randomVerse = getRandomItem(verses);
-                    const randomStyle = styleToggle.checked && styles.length > 0 ? getRandomItem(styles) : null;
-                    displayArea.innerHTML = generatePanelsHTML(randomVerse, randomStyle);
-                }, 100);
-
-                setTimeout(() => {
-                    clearInterval(suspenseInterval);
-                    displayArea.classList.remove('suspense');
-                    resolve();
-                }, 2000);
-            });
-        }
-
-        // New challenge
-        async function newChallenge(e) {
-            if (verses.length === 0) {
-                displayArea.innerHTML = '<p class="error">No verses loaded!</p>';
-                return;
-            }
             
-            if (e) {
-                createRipple(e);
-            }
-            newChallengeBtn.disabled = true;
-            revealVerseBtn.style.display = 'none';
-            previewVerseBtn.style.display = 'none';
-
-            await runSuspenseAnimation();
-
-            // Get the final random verse and style
-            currentVerse = getRandomItem(verses);
-            currentStyle = styleToggle.checked && styles.length > 0 ? getRandomItem(styles) : null;
-            displayArea.innerHTML = generatePanelsHTML(currentVerse, currentStyle);
+            displayArea.innerHTML = html;
 
             // Create explosion effect on panels
             setTimeout(() => {
@@ -834,11 +721,10 @@
                 panels.forEach(panel => createExplosion(panel));
             }, 100);
 
-            // Show reveal button and re-enable new challenge button
+            // Show reveal button
             revealVerseBtn.style.display = 'inline-block';
-            previewVerseBtn.style.display = 'inline-block';
-            newChallengeBtn.disabled = false;
 
+            // Add lightning effect
             createLightning();
         }
         
@@ -851,51 +737,24 @@
             
             const verseDiv = document.createElement('div');
             verseDiv.className = 'verse-text';
-            verseDiv.innerHTML = `"${currentVerse.verse}"`;
+            verseDiv.innerHTML = `
+                <span class="reference">${currentVerse.reference}</span>
+                "${currentVerse.verse}"<br>
+                <small>- ${currentVerse.version}</small>
+            `;
             
             displayArea.appendChild(verseDiv);
             
-            // Hide reveal and preview buttons
+            // Hide reveal button
             revealVerseBtn.style.display = 'none';
-            previewVerseBtn.style.display = 'none';
-        }
-
-        // Preview verse in modal
-        function previewVerse() {
-            if (!currentVerse) return;
-            modalVerseText.innerHTML = `"${currentVerse.verse}" <br><br><em>(${currentVerse.reference} ${currentVerse.version})</em>`;
-            modal.style.display = 'flex';
-        }
-
-        // Close modal
-        function closeModal() {
-            modal.style.display = 'none';
         }
         
         // Event listeners
         newChallengeBtn.addEventListener('click', newChallenge);
         revealVerseBtn.addEventListener('click', revealVerse);
-        previewVerseBtn.addEventListener('click', previewVerse);
-        closeButton.addEventListener('click', closeModal);
-
-        // Close modal if clicked outside of the content
-        window.addEventListener('click', (e) => {
-            if (e.target === modal) {
-                closeModal();
-            }
-        });
         
         // Initialize on load
         init();
     </script>
-
-    <!-- Verse Preview Modal -->
-    <div id="verseModal" class="modal">
-        <div class="modal-content">
-            <span class="close-button">&times;</span>
-            <h2>Verse Preview</h2>
-            <p id="modalVerseText"></p>
-        </div>
-    </div>
 </body>
 </html>
