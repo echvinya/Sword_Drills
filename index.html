@@ -280,9 +280,6 @@
         }
 
         .style-display {
-            font-size: 1.4em;
-            font-weight: bold;
-            color: #ff6b6b;
             text-align: center;
             display: flex;
             flex-direction: column;
@@ -290,14 +287,22 @@
             align-items: center;
         }
 
+        .style-name {
+            font-size: 2em;
+            font-weight: bold;
+            color: #ff6b6b;
+        }
+
+        .style-condition {
+            font-size: 1.2em;
+            opacity: 0.8;
+        }
+
         .participant-icon {
             display: flex;
             align-items: center;
             gap: 5px;
             font-size: 0.9em;
-            background: rgba(255, 255, 255, 0.15);
-            padding: 5px 15px;
-            border-radius: 20px;
             margin-top: 10px;
         }
 
@@ -306,7 +311,7 @@
         }
 
         .verse-text {
-            font-size: 1.4em;
+            font-size: 2em;
             line-height: 1.6;
             padding: 25px;
             background: rgba(0, 0, 0, 0.3);
@@ -666,7 +671,6 @@
             // Style panel
             if (style) {
                 const participantIcon = style.participant === 'Team' ? '👥' : '🦸';
-                const participantText = style.participant === 'Team' ? 'Team' : 'Individual';
                 
                 html += `
                     <div class="panel-wrapper">
@@ -677,7 +681,6 @@
                                 <div class="style-condition">${style.winCondition}</div>
                                 <div class="participant-icon">
                                     <span>${participantIcon}</span>
-                                    ${participantText}
                                 </div>
                             </div>
                         </div>
@@ -692,7 +695,6 @@
                                 <div>Standard Reading</div>
                                 <div class="participant-icon">
                                     <span>🦸</span>
-                                    Individual
                                 </div>
                             </div>
                         </div>
