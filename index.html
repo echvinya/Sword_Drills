@@ -825,11 +825,6 @@
 
         // Preview verse in a new window
         function previewVerse() {
-            if (!currentVerse) {
-                alert("Generate a new challenge first!");
-                return;
-            }
-
             // If the window is already open, bring it to focus. Otherwise, create it.
             if (previewWindow && !previewWindow.closed) {
                 previewWindow.focus();
@@ -839,6 +834,18 @@
                     alert('Please allow pop-ups for this site to use the preview feature.');
                     return;
                 }
+            }
+
+            let content;
+            if (currentVerse) {
+                content = `
+                    <div class="verse-container">
+                        <span class="reference">${currentVerse.reference} (${currentVerse.version})</span>
+                        "${currentVerse.verse}"
+                    </div>
+                `;
+            } else {
+                content = `<div class="verse-container">Ready for the first challenge...</div>`;
             }
 
             // Write the content to the window
@@ -876,10 +883,7 @@
                         </style>
                     </head>
                     <body>
-                        <div class="verse-container">
-                            <span class="reference">${currentVerse.reference} (${currentVerse.version})</span>
-                            "${currentVerse.verse}"
-                        </div>
+                        ${content}
                     </body>
                 </html>
             `);
