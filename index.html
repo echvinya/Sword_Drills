@@ -287,6 +287,13 @@
             align-items: center;
         }
 
+        .style-header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+        }
+
         .style-name {
             font-family: 'Bangers', cursive;
             font-size: 3.8em;
@@ -303,12 +310,10 @@
             display: flex;
             align-items: center;
             gap: 5px;
-            font-size: 0.9em;
-            margin-top: 10px;
+            font-size: 2.7em;
         }
 
         .participant-icon span {
-            font-size: 1.2em;
         }
 
         .verse-text {
@@ -678,11 +683,13 @@
                         <div class="panel-title">CHALLENGE STYLE</div>
                         <div class="panel panel-right">
                             <div class="style-display">
-                                <div class="style-name">${style.style}</div>
-                                <div class="style-condition">${style.winCondition}</div>
-                                <div class="participant-icon">
-                                    <span>${participantIcon}</span>
+                                <div class="style-header">
+                                    <div class="style-name">${style.style}</div>
+                                    <div class="participant-icon">
+                                        <span>${participantIcon}</span>
+                                    </div>
                                 </div>
+                                <div class="style-condition">${style.winCondition}</div>
                             </div>
                         </div>
                     </div>
@@ -693,9 +700,11 @@
                         <div class="panel-title">CHALLENGE STYLE</div>
                         <div class="panel panel-right">
                             <div class="style-display">
-                                <div>Standard Reading</div>
-                                <div class="participant-icon">
-                                    <span>🦸</span>
+                                <div class="style-header">
+                                    <div class="style-name">Standard Reading</div>
+                                    <div class="participant-icon">
+                                        <span>🦸</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
